@@ -1,4 +1,4 @@
-import { ClipboardDocumentIcon } from "@heroicons/react/24/solid";
+import { ClipboardDocumentIcon, CheckIcon } from "@heroicons/react/24/solid";
 import * as Headless from "@headlessui/react";
 import { useCopyToClipboard } from "usehooks-ts";
 
@@ -7,6 +7,7 @@ import { MODES, VERSIONS } from "~/lib/constants";
 import { output } from "~/lib/responses";
 import type { Mode, PaletteConfig, Version } from "~/types";
 import { Radio } from "~/components/catalyst/radio";
+import { useState } from "react";
 
 type OutputProps = {
   palettes: PaletteConfig[];
@@ -24,12 +25,19 @@ export default function Output({
   setCurrentVersion,
 }: OutputProps) {
   const [, copy] = useCopyToClipboard();
+  const [copied, setCopied] = useState(false);
   const shaped = output(palettes, currentMode);
 
   const displayed: string =
     currentVersion === "3"
       ? createVersion3Config(shaped)
       : createVersion4Config(shaped);
+
+  const handleCopy = async () => {
+    await copy(displayed);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <>
@@ -82,13 +90,23 @@ export default function Output({
         id="output"
         className="relative w-full p-4 mx-auto bg-gray-50 text-gray-800 text-sm border border-gray-200 rounded-lg overflow-scroll"
       >
-        <div className="absolute right-4 top-4">
-          <Button outline onClick={() => copy(displayed)}>
-            <ClipboardDocumentIcon className="size-4" />
+        <div className="absolute right-4 top-4 flex gap-2">
+          <Button outline onClick={handleCopy}>
+            {copied ? (
+              <CheckIcon className="size-4 text-green-600" />
+            ) : (
+              <ClipboardDocumentIcon className="size-4" />
+            )}
             <span className="sr-only">Copy to Clipboard</span>
           </Button>
         </div>
-        <pre>{displayed}</pre>
+        <div className="pr-20">
+          {currentVersion === "3" ? (
+            <pre className="whitespace-pre-wrap break-all">{formatVersion3Output(shaped)}</pre>
+          ) : (
+            <pre className="whitespace-pre-wrap break-all">{displayed}</pre>
+          )}
+        </div>
       </section>
       <div className="prose">
         {currentVersion === "3" ? (
@@ -105,6 +123,27 @@ export default function Output({
   );
 }
 
+function formatVersion3Output(colors: Record<string, any>) {
+  const output = [`// Copy and paste this into your tailwind.config.js`, `module.exports = {`, `  theme: {`, `    extend: {`, `      colors: {`];
+
+  Object.entries(colors).forEach(([paletteName, shades], index) => {
+    output.push(`        "${paletteName}": {`);
+    Object.entries(shades as Record<string, string>).forEach(([shade, value]) => {
+      const isLast = index === Object.keys(colors).length - 1 &&
+                    shade === Object.keys(shades).pop();
+      const comma = isLast ? '' : ',';
+      output.push(`          ${shade}: "${value}"${comma}`);
+    });
+    const isLastPalette = index === Object.keys(colors).length - 1;
+    const comma = isLastPalette ? '' : ',';
+    output.push(`        }${comma}`);
+  });
+
+  output.push(`      },`, `    },`, `  },`, `};`);
+
+  return output.join('\n');
+}
+
 function createVersion3Config(colors: Record<string, string>) {
   return JSON.stringify({ colors }, null, 2).replace(
     /"+[0-9]+"/g,
@@ -114,17 +153,19 @@ function createVersion3Config(colors: Record<string, string>) {
   );
 }
 
-function createVersion4Config(colors: Record<string, string>) {
-  return [
-    `@theme {`,
-    ...Object.entries(colors).map(([colorName]) =>
-      Object.entries(colors[colorName])
-        .map(
-          ([shade, value]) =>
-            `  --color-${colorName}-${shade}: ${value.toLocaleLowerCase().replace(" / <alpha-value>", "")};`,
-        )
-        .join("\n"),
-    ),
-    `}`,
-  ].join("\n");
+function createVersion4Config(colors: Record<string, any>) {
+  const output = [`/* Copy and paste this into your CSS file with Tailwind CSS v4 */`, `@theme {`];
+
+  Object.entries(colors).forEach(([colorName, shades]) => {
+    output.push(`  /* ${colorName.charAt(0).toUpperCase() + colorName.slice(1)} colors */`);
+    Object.entries(shades as Record<string, string>).forEach(([shade, value]) => {
+      const cleanValue = value.toLocaleLowerCase().replace(" / <alpha-value>", "");
+      output.push(`  --color-${colorName}-${shade}: ${cleanValue};`);
+    });
+    output.push(""); // Empty line between palettes
+  });
+
+  output.push(`}`);
+
+  return output.join('\n');
 }

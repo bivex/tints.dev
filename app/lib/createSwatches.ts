@@ -1,3 +1,18 @@
+/**
+ * Copyright (c) 2025 Bivex
+ *
+ * Author: Bivex
+ * Available for contact via email: support@b-b.top
+ * For up-to-date contact information:
+ * https://github.com/bivex
+ *
+ * Created: 2025-12-19T06:52:57
+ * Last Updated: 2025-12-19T06:55:25
+ *
+ * Licensed under the MIT License.
+ * Commercial licensing available upon request.
+ */
+
 import chroma from "chroma-js";
 import { Hsluv } from "hsluv";
 

@@ -1,24 +1,40 @@
-import {
-  MoonIcon,
-  SparklesIcon,
-  StarIcon,
-  SunIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/solid";
-import { useState } from "react";
-
+// tints.dev/app/components/Demo.tsx
+import React from "react"; // Explicitly import React
 import type { PaletteConfig } from "~/types";
-
 import { Button } from "~/components/catalyst/button";
+import { ToggleSwitch } from "~/components/ToggleSwitch";
+import { FeatureCard } from "~/components/FeatureCard";
+import { CallToActionSection } from "~/components/CallToActionSection";
+import { Rating } from "~/components/Rating";
+import { Tag } from "~/components/Tag";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 
-export default function Demo({
-  close,
-  palettes,
-}: {
+interface DemoProps {
   close: () => void;
-  palettes: PaletteConfig[];
-}) {
-  const [darkMode, setDarkMode] = useState(false);
+  palette: PaletteConfig;
+  title: string;
+  description: string;
+  features: { label: string; value: string; }[];
+  callToActionButtons: { label: string; onClick: () => void; }[];
+  imageUrl: string;
+  isDarkMode: boolean;
+  onToggleDarkMode: () => void;
+  tags?: string[];
+}
+
+export default function Demo(props: DemoProps) {
+  const {
+    close,
+    palette,
+    title,
+    description,
+    features,
+    callToActionButtons,
+    imageUrl,
+    isDarkMode,
+    onToggleDarkMode,
+    tags,
+  } = props;
 
   return (
     <section className="fixed inset-0 pointer-events-none w-screen h-screen z-50 flex flex-col justify-end items-center px-2 md:px-0">
@@ -37,105 +53,47 @@ export default function Demo({
       <div
         className={[
           `relative container mx-auto border-gray-800 border-16 border-b-0 pb-0 rounded-t-3xl overflow-hidden grid grid-cols-1 md:grid-cols-3 md:min-h-[50vh] pointer-events-auto bg-linear-to-b`,
-          darkMode
+          isDarkMode
             ? `dark from-first-800 to-first-900`
             : `from-white to-first-100`,
         ].join(` `)}
       >
         <div className="absolute z-10 p-4 md:p-12">
-          <button
-            className={`rounded-full p-2 bg-white dark:bg-first-900 text-first-500 hover:bg-first-500 hover:text-white transition-colors duration-200`}
-            type="button"
-            onClick={() => setDarkMode(!darkMode)}
-          >
-            {darkMode ? (
-              <SunIcon className="w-5 h-auto" />
-            ) : (
-              <MoonIcon className="w-5 h-auto" />
-            )}
-          </button>
+          <ToggleSwitch isDarkMode={isDarkMode} onToggle={onToggleDarkMode} />
         </div>
         <img
           loading="lazy"
           style={{ clipPath: `polygon(0 0, 100% 0%, 75% 100%, 0% 100%)` }}
           className="bg-first-100 md:absolute top-0 md:bottom-0 w-11/12 md:w-1/3 h-24 md:h-full object-cover"
-          src={`//picsum.photos/seed/${palettes[0].value}/400/800/`}
+          src={imageUrl}
           width="400"
           height="800"
-          alt=""
+          alt={title}
         />
 
         <div className="md:col-span-2 md:col-start-2 p-4 md:p-12 flex flex-col items-start gap-4 md:gap-8">
-          <div className="bg-first-100 text-first-500 dark:bg-first-900 dark:text-first-100 text-xs leading-none font-bold inline-flex items-center gap-2 rounded-full py-1.5 px-2">
-            <SparklesIcon className="w-3 h-auto" />
-            Early Access
-          </div>
+          {tags?.length > 0 && <Tag label={tags[0]} />}
 
           <h2 className="text-3xl md:text-5xl font-bold text-first-500 dark:text-first-400 leading-none">
-            The tastiest demos
+            {title}
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8">
             <div className="flex flex-col md:col-span-1 lg:col-span-2">
               <p className="text-gray-600 dark:text-first-50 md:text-lg max-w-sm mb-4">
-                This feature could do with some work. It's currently a
-                placeholder.
+                {description}
               </p>
-              <div className="flex items-center justify-start gap-2">
-                <div className="py-3 px-4 leading-none rounded-sm bg-first-500 text-white font-bold text-sm transition-colors duration-200 hover:cursor-pointer hover:bg-first-100 hover:text-first-600">
-                  Explore
-                </div>
-                <div className="py-3 px-4 leading-none rounded-sm bg-white text-first-500 font-bold text-sm transition-colors duration-200 hover:cursor-pointer hover:bg-first-100 hover:text-first-600">
-                  About
-                </div>
-              </div>
+              <CallToActionSection buttons={callToActionButtons} />
             </div>
 
             <div className="md:col-span-2 lg:col-span-3">
               <div className="grid grid-cols-1 gap-2 rounded-xl bg-first-500 text-white p-2 shadow-first-200 dark:shadow-first-900 shadow-lg">
                 <div className="flex gap-4">
-                  <div className="flex-1 flex flex-col gap-1 p-2">
-                    <span className="text-3xl tracking-tight leading-none">
-                      99.99%
-                    </span>
-                    <span className="text-xs font-bold text-first-100">
-                      Uptime
-                    </span>
-                  </div>
-                  <div className="flex-1 flex flex-col gap-1 p-2">
-                    <span className="text-3xl tracking-tight leading-none">
-                      $159m
-                    </span>
-                    <span className="text-xs font-bold text-first-100">
-                      Funding
-                    </span>
-                  </div>
-                  <div className="flex-1 hidden lg:flex flex-col gap-1 p-2">
-                    <span className="text-3xl tracking-tight leading-none">
-                      5,000
-                    </span>
-                    <span className="text-xs font-bold text-first-100">
-                      Features
-                    </span>
-                  </div>
+                  {features.map((feature, index) => (
+                    <FeatureCard key={index} label={feature.label} value={feature.value} />
+                  ))}
                 </div>
-                <div className="bg-first-700 p-2 rounded-lg">
-                  <div className="flex flex-col gap-1 p-2">
-                    <div className="flex items-center text-first-100 mb-2">
-                      <StarIcon className="w-4 h-auto" />
-                      <StarIcon className="w-4 h-auto" />
-                      <StarIcon className="w-4 h-auto" />
-                      <StarIcon className="w-4 h-auto" />
-                      <StarIcon className="w-4 h-auto" />
-                    </div>
-                    <span className="text-3xl tracking-tight leading-none">
-                      Rated 5 Stars
-                    </span>
-                    <span className="text-xs font-bold text-first-100">
-                      By trusted research company
-                    </span>
-                  </div>
-                </div>
+                <Rating stars={5} text="Rated 5 Stars" byline="By trusted research company" />
               </div>
             </div>
           </div>

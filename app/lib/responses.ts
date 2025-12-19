@@ -13,6 +13,9 @@ import { isHex, isValidName, removeTrailingSlash } from "~/lib/helpers";
 import { serializePalettes, serializePalette } from "~/lib/paletteHash";
 import type { PaletteEssentials } from "~/lib/paletteHash";
 import type { Mode, PaletteConfig } from "~/types";
+import { PremiumPaletteGenerator } from "~/lib/premiumPaletteUtils";
+import { STYLE_PRESETS } from "~/lib/constants";
+import { calculateStopFromColor } from "~/lib/helpers";
 
 import { createDisplayColor } from "./createDisplayColor";
 
@@ -101,6 +104,38 @@ export function createPaletteMetaImageUrl(palette: PaletteConfig) {
 }
 
 // Turn request URL object into initial palettes
+/**
+ * Создает палитру в стиле Adobe Premium (современный минималистичный дизайн)
+ */
+export function createAdobePremiumPalette(currentValues: string[] = []): PaletteConfig {
+  // Используем премиум генератор для создания палитры в стиле "modern"
+  const premiumData = PremiumPaletteGenerator.generatePremiumPalette({
+    style: 'modern',
+    currentValues,
+    qualityThreshold: 80, // Высокий порог качества для премиум стиля
+    accessibilityRequired: true, // Современный дизайн должен быть доступным
+  });
+
+  // Создаем полный конфиг палитры
+  const paletteConfig = PremiumPaletteGenerator.createPaletteConfig(
+    premiumData,
+    'curated',
+    STYLE_PRESETS.modern
+  );
+
+  // Заполняем swatches
+  const finalPalette = {
+    ...paletteConfig,
+    valueStop: calculateStopFromColor(paletteConfig.value, paletteConfig.colorMode),
+    swatches: createSwatches({
+      ...paletteConfig,
+      valueStop: calculateStopFromColor(paletteConfig.value, paletteConfig.colorMode),
+    }),
+  };
+
+  return finalPalette;
+}
+
 export function requestToPalettes(url: string) {
   const requestUrl = new URL(url);
 
@@ -108,9 +143,9 @@ export function requestToPalettes(url: string) {
     return [];
   }
 
-  // Start with a random default palette if no hash provided
-  const random = createRandomPalette();
-  return [random];
+  // Start with Adobe Premium style palette (modern minimalist) instead of random
+  const adobePremium = createAdobePremiumPalette();
+  return [adobePremium];
 }
 
 // Convert array of palette objects used in GUI to array of colour swatches for Tailwind Config
