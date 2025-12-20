@@ -7,13 +7,13 @@
  * https://github.com/bivex
  *
  * Created: 2025-12-20T16:13:25
- * Last Updated: 2025-12-20T16:38:00
+ * Last Updated: 2025-12-20T16:39:18
  *
  * Licensed under the MIT License.
  * Commercial licensing available upon request.
  */
 
-import { ClipboardDocumentIcon, CheckIcon, EyeIcon, CodeBracketIcon, PaintBrushIcon, CubeIcon, SparklesIcon, SunIcon, MoonIcon, SwatchIcon } from "@heroicons/react/24/solid";
+import { ClipboardDocumentIcon, CheckIcon, EyeIcon, CodeBracketIcon, PaintBrushIcon, CubeIcon, SparklesIcon, SunIcon, MoonIcon, SwatchIcon, VariableIcon, TagIcon } from "@heroicons/react/24/solid";
 import * as Headless from "@headlessui/react";
 import { useCopyToClipboard } from "usehooks-ts";
 
@@ -46,12 +46,20 @@ export default function Output({
   const [buttonStyleBatch, setButtonStyleBatch] = useState<'primary' | 'secondary' | 'accent'>('primary');
   const [paletteDetail, setPaletteDetail] = useState<'standard' | 'extended'>('standard');
   const [themeContext, setThemeContext] = useState<'light' | 'dark' | 'auto'>('auto');
+  const [outputFormat, setOutputFormat] = useState<'palette' | 'semantic' | 'tokens'>('palette');
   const shaped = output(palettes, currentMode, paletteDetail, themeContext);
 
-  const displayed: string =
-    currentVersion === "3"
-      ? createVersion3Config(shaped, themeContext)
-      : createVersion4Config(shaped, themeContext);
+  const displayed: string = (() => {
+    if (outputFormat === 'semantic') {
+      return generateSemanticColors(palettes, themeContext);
+    } else if (outputFormat === 'tokens') {
+      return generateDesignTokens(palettes, themeContext);
+    } else {
+      return currentVersion === "3"
+        ? createVersion3Config(shaped, themeContext)
+        : createVersion4Config(shaped, themeContext);
+    }
+  })();
 
   const handleCopy = async () => {
     await copy(displayed);
@@ -60,14 +68,170 @@ export default function Output({
   };
 
   const handleCopyWithTheme = async () => {
-    const shapedWithTheme = output(palettes, currentMode, paletteDetail, themeContext);
-    const displayedWithTheme = currentVersion === "3"
-      ? createVersion3Config(shapedWithTheme)
-      : createVersion4Config(shapedWithTheme);
+    let outputCode = '';
 
-    await copy(displayedWithTheme);
+    if (outputFormat === 'semantic') {
+      outputCode = generateSemanticColors(palettes, themeContext);
+    } else if (outputFormat === 'tokens') {
+      outputCode = generateDesignTokens(palettes, themeContext);
+    } else {
+      const shapedWithTheme = output(palettes, currentMode, paletteDetail, themeContext);
+      outputCode = currentVersion === "3"
+        ? createVersion3Config(shapedWithTheme, themeContext)
+        : createVersion4Config(shapedWithTheme, themeContext);
+    }
+
+    await copy(outputCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const generateSemanticColors = (palettes: PaletteConfig[], theme: 'light' | 'dark' | 'auto') => {
+    const palette = palettes[0]; // Используем первую палитру как основу
+    if (!palette) return '';
+
+    const shades = palette.swatches.reduce((acc, swatch) => {
+      if (![0, 1000].includes(swatch.stop)) {
+        acc[swatch.stop] = createDisplayColor(swatch.hex, currentMode, true);
+      }
+      return acc;
+    }, {} as Record<number, string>);
+
+    // Определяем цвета в зависимости от темы
+    const isDark = theme === 'dark';
+    const primaryBase = shades[500] || shades[600];
+    const primaryHover = shades[600] || shades[700];
+    const primaryActive = shades[700] || shades[800];
+
+    const semanticColors = {
+      // Базовые цвета
+      background: isDark ? '#0f172a' : '#ffffff',
+      surface: isDark ? '#1e293b' : '#f8fafc',
+      'surface-hover': isDark ? '#334155' : '#f1f5f9',
+      border: isDark ? '#334155' : '#e2e8f0',
+      'border-hover': isDark ? '#475569' : '#cbd5e1',
+
+      // Текст
+      'text-primary': isDark ? '#f8fafc' : '#0f172a',
+      'text-secondary': isDark ? '#94a3b8' : '#475569',
+      'text-tertiary': isDark ? '#64748b' : '#64748b',
+      'text-disabled': isDark ? '#475569' : '#94a3b8',
+
+      // Primary система
+      primary: primaryBase,
+      'primary-hover': primaryHover,
+      'primary-active': primaryActive,
+      'primary-contrast': isDark ? '#ffffff' : '#ffffff',
+
+      // Системные цвета
+      success: isDark ? '#10b981' : '#059669',
+      'success-hover': isDark ? '#059669' : '#047857',
+      warning: '#f59e0b',
+      'warning-hover': '#d97706',
+      error: '#ef4444',
+      'error-hover': '#dc2626',
+      info: primaryBase,
+      'info-hover': primaryHover,
+
+      // Акцент (вторичный)
+      accent: shades[400] || shades[300],
+      'accent-hover': shades[500] || shades[400],
+
+      // Disabled состояния
+      disabled: isDark ? '#334155' : '#e2e8f0',
+      'disabled-text': isDark ? '#64748b' : '#94a3b8',
+    };
+
+    const themeName = theme === 'auto' ? 'universal' : theme;
+    const output = [
+      `/* ==========================================================================`,
+      ` * Semantic Color System (${themeName} theme)`,
+      ` * Generated by tints.dev`,
+      ` * Design-system ready color roles`,
+      ` * ========================================================================== */`,
+      ``,
+      `:root {`
+    ];
+
+    Object.entries(semanticColors).forEach(([role, color]) => {
+      output.push(`  --color-${role}: ${color};`);
+    });
+
+    output.push(`}`, ``);
+
+    return output.join('\n');
+  };
+
+  const generateDesignTokens = (palettes: PaletteConfig[], theme: 'light' | 'dark' | 'auto') => {
+    const palette = palettes[0];
+    if (!palette) return '';
+
+    const shades = palette.swatches.reduce((acc, swatch) => {
+      if (![0, 1000].includes(swatch.stop)) {
+        acc[swatch.stop] = createDisplayColor(swatch.hex, currentMode, true);
+      }
+      return acc;
+    }, {} as Record<number, string>);
+
+    const isDark = theme === 'dark';
+    const themeName = theme === 'auto' ? 'universal' : theme;
+
+    const tokens = {
+      // Цветовая палитра
+      palette: shades,
+
+      // Семантические роли
+      semantic: {
+        background: isDark ? '#0f172a' : '#ffffff',
+        surface: isDark ? '#1e293b' : '#f8fafc',
+        'surface-hover': isDark ? '#334155' : '#f1f5f9',
+        border: isDark ? '#334155' : '#e2e8f0',
+        'border-hover': isDark ? '#475569' : '#cbd5e1',
+        'text-primary': isDark ? '#f8fafc' : '#0f172a',
+        'text-secondary': isDark ? '#94a3b8' : '#475569',
+        'text-tertiary': isDark ? '#64748b' : '#64748b',
+        primary: shades[500] || shades[600],
+        'primary-hover': shades[600] || shades[700],
+        'primary-active': shades[700] || shades[800],
+        success: isDark ? '#10b981' : '#059669',
+        warning: '#f59e0b',
+        error: '#ef4444',
+        info: shades[500] || shades[600],
+      },
+
+      // Компонентные токены
+      components: {
+        button: {
+          primary: {
+            background: shades[500] || shades[600],
+            hover: shades[600] || shades[700],
+            active: shades[700] || shades[800],
+            disabled: isDark ? '#334155' : '#e2e8f0',
+            text: '#ffffff',
+          },
+          secondary: {
+            background: isDark ? '#334155' : '#f8fafc',
+            hover: isDark ? '#475569' : '#f1f5f9',
+            active: isDark ? '#64748b' : '#e2e8f0',
+            border: isDark ? '#475569' : '#cbd5e1',
+            text: isDark ? '#f8fafc' : '#0f172a',
+          }
+        },
+        input: {
+          background: isDark ? '#1e293b' : '#ffffff',
+          border: isDark ? '#334155' : '#e2e8f0',
+          'border-focus': shades[500] || shades[600],
+          placeholder: isDark ? '#64748b' : '#94a3b8',
+        }
+      }
+    };
+
+    return JSON.stringify({
+      name: `${palette.name} Design Tokens`,
+      theme: themeName,
+      version: '1.0.0',
+      tokens
+    }, null, 2);
   };
 
   const handleCopyColor = async (color: string) => {
@@ -234,6 +398,40 @@ export default function Output({
             </Headless.Field>
           </Headless.RadioGroup>
         </Headless.Fieldset>
+
+        <Headless.Fieldset className="flex gap-3">
+          <Headless.Legend className="text-base/6 font-medium sm:text-sm/6">
+            Output format:
+          </Headless.Legend>
+          <Headless.RadioGroup
+            onChange={(v) => setOutputFormat(v as 'palette' | 'semantic' | 'tokens')}
+            name="format"
+            value={outputFormat}
+            className="flex gap-3"
+          >
+            <Headless.Field className="flex items-center gap-2">
+              <Radio value="palette" />
+              <PaintBrushIcon className="size-4" />
+              <Headless.Label className="text-base/6 select-none sm:text-sm/6 whitespace-nowrap">
+                Color Palette
+              </Headless.Label>
+            </Headless.Field>
+            <Headless.Field className="flex items-center gap-2">
+              <Radio value="semantic" />
+              <TagIcon className="size-4" />
+              <Headless.Label className="text-base/6 select-none sm:text-sm/6 whitespace-nowrap">
+                Semantic Colors
+              </Headless.Label>
+            </Headless.Field>
+            <Headless.Field className="flex items-center gap-2">
+              <Radio value="tokens" />
+              <VariableIcon className="size-4" />
+              <Headless.Label className="text-base/6 select-none sm:text-sm/6 whitespace-nowrap">
+                Design Tokens
+              </Headless.Label>
+            </Headless.Field>
+          </Headless.RadioGroup>
+        </Headless.Fieldset>
       </div>
 
       <section
@@ -258,7 +456,7 @@ export default function Output({
               </>
             )}
           </Button>
-          {themeContext !== 'auto' && (
+          {(themeContext !== 'auto' || outputFormat !== 'palette') && (
             <Button
               outline
               onClick={handleCopyWithTheme}
@@ -269,7 +467,9 @@ export default function Output({
               ) : (
                 <ClipboardDocumentIcon className="size-4" />
               )}
-              <span className="hidden sm:inline">Copy ({themeContext})</span>
+              <span className="hidden sm:inline">
+                Copy {outputFormat === 'palette' ? `(${themeContext})` : `(${outputFormat})`}
+              </span>
               <span className="sm:hidden">Copy</span>
             </Button>
           )}
@@ -294,7 +494,9 @@ export default function Output({
             />
           ) : (
             <>
-              {currentVersion === "3" ? (
+              {outputFormat === 'semantic' || outputFormat === 'tokens' ? (
+                <pre className="whitespace-pre-wrap break-all">{displayed}</pre>
+              ) : currentVersion === "3" ? (
                 <pre className="whitespace-pre-wrap break-all">{formatVersion3Output(shaped, themeContext)}</pre>
               ) : (
                 <pre className="whitespace-pre-wrap break-all">{displayed}</pre>
@@ -389,7 +591,25 @@ export default function Output({
       <div className="prose">
         <div className="flex items-center justify-between">
           <div>
-            {currentVersion === "3" ? (
+            {outputFormat === 'semantic' ? (
+              <p>
+                Copy these CSS custom properties for your design system
+                {themeContext !== 'auto' && (
+                  <span className="text-purple-600 font-medium">
+                    {' '}(optimized for {themeContext} theme)
+                  </span>
+                )}
+              </p>
+            ) : outputFormat === 'tokens' ? (
+              <p>
+                Design tokens in JSON format for your design system
+                {themeContext !== 'auto' && (
+                  <span className="text-purple-600 font-medium">
+                    {' '}(optimized for {themeContext} theme)
+                  </span>
+                )}
+              </p>
+            ) : currentVersion === "3" ? (
               <p>
                 Paste this into your <code>tailwind.config.js</code> file
                 {themeContext !== 'auto' && (
@@ -414,7 +634,7 @@ export default function Output({
               <span>Visual preview • Click colors to copy values</span>
             ) : (
               <span>
-                Code view • {paletteDetail} • {themeContext} theme • Use eye icon for visual preview
+                {outputFormat === 'palette' ? 'Color palette' : outputFormat === 'semantic' ? 'Semantic colors' : 'Design tokens'} • {paletteDetail} • {themeContext} theme • Use eye icon for visual preview
               </span>
             )}
           </div>
