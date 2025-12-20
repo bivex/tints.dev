@@ -7,7 +7,7 @@
  * https://github.com/bivex
  *
  * Created: 2025-12-20T16:13:25
- * Last Updated: 2025-12-20T16:41:14
+ * Last Updated: 2025-12-20T16:45:03
  *
  * Licensed under the MIT License.
  * Commercial licensing available upon request.
@@ -62,9 +62,9 @@ export default function Output({
 
     // Определяем цвета в зависимости от темы
     const isDark = theme === 'dark';
-    const primaryBase = shades[500] || shades[600];
-    const primaryHover = shades[600] || shades[700];
-    const primaryActive = shades[700] || shades[800];
+    const primaryBase = shades[500] || shades[600] || shades[700] || '#4f46e5';
+    const primaryHover = shades[600] || shades[700] || shades[800] || '#4338ca';
+    const primaryActive = shades[700] || shades[800] || shades[900] || '#3730a3';
 
     const semanticColors = {
       // Базовые цвета
@@ -97,8 +97,8 @@ export default function Output({
       'info-hover': primaryHover,
 
       // Акцент (вторичный)
-      accent: shades[400] || shades[300],
-      'accent-hover': shades[500] || shades[400],
+      accent: shades[400] || shades[300] || shades[500] || '#8b5cf6',
+      'accent-hover': shades[500] || shades[400] || shades[600] || '#7c3aed',
 
       // Disabled состояния
       disabled: isDark ? '#334155' : '#e2e8f0',
@@ -153,22 +153,22 @@ export default function Output({
         'text-primary': isDark ? '#f8fafc' : '#0f172a',
         'text-secondary': isDark ? '#94a3b8' : '#475569',
         'text-tertiary': isDark ? '#64748b' : '#64748b',
-        primary: shades[500] || shades[600],
-        'primary-hover': shades[600] || shades[700],
-        'primary-active': shades[700] || shades[800],
+        primary: shades[500] || shades[600] || shades[700] || '#4f46e5',
+        'primary-hover': shades[600] || shades[700] || shades[800] || '#4338ca',
+        'primary-active': shades[700] || shades[800] || shades[900] || '#3730a3',
         success: isDark ? '#10b981' : '#059669',
         warning: '#f59e0b',
         error: '#ef4444',
-        info: shades[500] || shades[600],
+        info: shades[500] || shades[600] || shades[700] || '#4f46e5',
       },
 
       // Компонентные токены
       components: {
         button: {
           primary: {
-            background: shades[500] || shades[600],
-            hover: shades[600] || shades[700],
-            active: shades[700] || shades[800],
+            background: shades[500] || shades[600] || shades[700] || '#4f46e5',
+            hover: shades[600] || shades[700] || shades[800] || '#4338ca',
+            active: shades[700] || shades[800] || shades[900] || '#3730a3',
             disabled: isDark ? '#334155' : '#e2e8f0',
             text: '#ffffff',
           },
@@ -183,7 +183,7 @@ export default function Output({
         input: {
           background: isDark ? '#1e293b' : '#ffffff',
           border: isDark ? '#334155' : '#e2e8f0',
-          'border-focus': shades[500] || shades[600],
+          'border-focus': shades[500] || shades[600] || shades[700] || '#4f46e5',
           placeholder: isDark ? '#64748b' : '#94a3b8',
         }
       }
@@ -284,8 +284,8 @@ export default function Output({
       'info-hover': primaryHover,
 
       // Акцент (вторичный)
-      accent: shades[400] || shades[300],
-      'accent-hover': shades[500] || shades[400],
+      accent: shades[400] || shades[300] || shades[500] || '#8b5cf6',
+      'accent-hover': shades[500] || shades[400] || shades[600] || '#7c3aed',
 
       // Disabled состояния
       disabled: isDark ? '#334155' : '#e2e8f0',
