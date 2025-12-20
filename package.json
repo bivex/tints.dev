@@ -7,13 +7,18 @@
   "author": "Simeon Griggs",
   "scripts": {
     "dev": "react-router dev",
+    "dev:debug": "NODE_OPTIONS='--inspect' DEBUG=vite:* react-router dev",
+    "dev:verbose": "DEBUG=react-router:* react-router dev --verbose",
     "build": "react-router build",
+    "build:debug": "DEBUG=react-router:* react-router build --verbose",
     "start": "react-router-serve ./build/server/index.js",
+    "start:debug": "NODE_OPTIONS='--inspect' DEBUG=* react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
     "format": "prettier --write .",
     "lint": "pnpm dlx oxlint@latest",
     "test": "vitest run",
     "test:run": "vitest run",
+    "test:debug": "NODE_OPTIONS='--inspect' vitest run",
     "prepare": "husky"
   },
   "dependencies": {

@@ -7,7 +7,7 @@
  * https://github.com/bivex
  *
  * Created: 2025-12-20T16:13:25
- * Last Updated: 2025-12-20T16:48:46
+ * Last Updated: 2025-12-20T16:55:12
  *
  * Licensed under the MIT License.
  * Commercial licensing available upon request.
@@ -40,8 +40,23 @@ export default function Output({
   currentVersion,
   setCurrentVersion,
 }: OutputProps) {
+  // Debug logging
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔧 Output component render:', {
+      palettesCount: palettes?.length || 0,
+      currentMode,
+      currentVersion,
+      outputFormat,
+      themeContext,
+      paletteDetail
+    });
+  }
+
   // Early return if no palettes
   if (!palettes || palettes.length === 0) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('⚠️ No palettes available, showing empty state');
+    }
     return (
       <div className="w-full p-4 mx-auto bg-gray-50 text-gray-800 text-sm border border-gray-200 rounded-lg">
         <p className="text-gray-500">No palettes available to display.</p>
@@ -59,10 +74,24 @@ export default function Output({
 
   // Helper functions need to be defined before usage
   const generateSemanticColors = (palettes: PaletteConfig[], theme: 'light' | 'dark' | 'auto') => {
-    if (!palettes || palettes.length === 0) return '';
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🎨 Generating semantic colors:', { palettesCount: palettes?.length, theme });
+    }
+
+    if (!palettes || palettes.length === 0) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('⚠️ No palettes for semantic colors');
+      }
+      return '';
+    }
 
     const palette = palettes[0]; // Используем первую палитру как основу
-    if (!palette) return '';
+    if (!palette) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('⚠️ No palette found for semantic colors');
+      }
+      return '';
+    }
 
     const shades = palette.swatches.reduce((acc, swatch) => {
       if (![0, 1000].includes(swatch.stop)) {
@@ -137,10 +166,24 @@ export default function Output({
   };
 
   const generateDesignTokens = (palettes: PaletteConfig[], theme: 'light' | 'dark' | 'auto') => {
-    if (!palettes || palettes.length === 0) return '';
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🎫 Generating design tokens:', { palettesCount: palettes?.length, theme });
+    }
+
+    if (!palettes || palettes.length === 0) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('⚠️ No palettes for design tokens');
+      }
+      return '';
+    }
 
     const palette = palettes[0];
-    if (!palette) return '';
+    if (!palette) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('⚠️ No palette found for design tokens');
+      }
+      return '';
+    }
 
     const shades = palette.swatches.reduce((acc, swatch) => {
       if (![0, 1000].includes(swatch.stop)) {
@@ -213,15 +256,26 @@ export default function Output({
   const shaped = output(palettes, currentMode, paletteDetail, themeContext);
 
   const displayed: string = (() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📄 Generating displayed content:', { outputFormat, currentVersion, themeContext });
+    }
+
+    let result = '';
     if (outputFormat === 'semantic') {
-      return generateSemanticColors(palettes, themeContext);
+      result = generateSemanticColors(palettes, themeContext);
     } else if (outputFormat === 'tokens') {
-      return generateDesignTokens(palettes, themeContext);
+      result = generateDesignTokens(palettes, themeContext);
     } else {
-      return currentVersion === "3"
+      result = currentVersion === "3"
         ? createVersion3Config(shaped, themeContext)
         : createVersion4Config(shaped, themeContext);
     }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📄 Display content generated, length:', result.length);
+    }
+
+    return result;
   })();
 
   const handleCopy = async () => {
@@ -231,22 +285,35 @@ export default function Output({
   };
 
   const handleCopyWithTheme = async () => {
-    let outputCode = '';
-
-    if (outputFormat === 'semantic') {
-      outputCode = generateSemanticColors(palettes, themeContext);
-    } else if (outputFormat === 'tokens') {
-      outputCode = generateDesignTokens(palettes, themeContext);
-    } else {
-      const shapedWithTheme = output(palettes, currentMode, paletteDetail, themeContext);
-      outputCode = currentVersion === "3"
-        ? createVersion3Config(shapedWithTheme, themeContext)
-        : createVersion4Config(shapedWithTheme, themeContext);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📋 Copying with theme:', { outputFormat, themeContext, currentMode, paletteDetail });
     }
 
-    await copy(outputCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    let outputCode = '';
+
+    try {
+      if (outputFormat === 'semantic') {
+        outputCode = generateSemanticColors(palettes, themeContext);
+      } else if (outputFormat === 'tokens') {
+        outputCode = generateDesignTokens(palettes, themeContext);
+      } else {
+        const shapedWithTheme = output(palettes, currentMode, paletteDetail, themeContext);
+        outputCode = currentVersion === "3"
+          ? createVersion3Config(shapedWithTheme, themeContext)
+          : createVersion4Config(shapedWithTheme, themeContext);
+      }
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Generated output code, length:', outputCode.length);
+      }
+
+      await copy(outputCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('❌ Error during copy operation:', error);
+      throw error;
+    }
   };
 
   const handleCopyColor = async (color: string) => {
