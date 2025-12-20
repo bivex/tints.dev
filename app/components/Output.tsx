@@ -7,7 +7,7 @@
  * https://github.com/bivex
  *
  * Created: 2025-12-20T16:13:25
- * Last Updated: 2025-12-20T17:03:26
+ * Last Updated: 2025-12-20T17:08:09
  *
  * Licensed under the MIT License.
  * Commercial licensing available upon request.
@@ -82,7 +82,7 @@ export default function Output({
   }
 
   // Helper functions need to be defined before usage
-  const generateSemanticColors = (palettes: PaletteConfig[], theme: 'light' | 'dark' | 'auto') => {
+  const generateSemanticColors = (palettes: PaletteConfig[], theme: 'light' | 'dark' | 'auto', currentMode: Mode) => {
     if (process.env.NODE_ENV === 'development') {
       console.log('🎨 Generating semantic colors:', { palettesCount: palettes?.length, theme });
     }
@@ -174,7 +174,7 @@ export default function Output({
     return output.join('\n');
   };
 
-  const generateDesignTokens = (palettes: PaletteConfig[], theme: 'light' | 'dark' | 'auto') => {
+  const generateDesignTokens = (palettes: PaletteConfig[], theme: 'light' | 'dark' | 'auto', currentMode: Mode) => {
     if (process.env.NODE_ENV === 'development') {
       console.log('🎫 Generating design tokens:', { palettesCount: palettes?.length, theme });
     }
@@ -271,9 +271,9 @@ export default function Output({
 
     let result = '';
     if (outputFormat === 'semantic') {
-      result = generateSemanticColors(palettes, themeContext);
+      result = generateSemanticColors(palettes, themeContext, currentMode);
     } else if (outputFormat === 'tokens') {
-      result = generateDesignTokens(palettes, themeContext);
+      result = generateDesignTokens(palettes, themeContext, currentMode);
     } else {
       result = currentVersion === "3"
         ? createVersion3Config(shaped, themeContext)
@@ -302,9 +302,9 @@ export default function Output({
 
     try {
       if (outputFormat === 'semantic') {
-        outputCode = generateSemanticColors(palettes, themeContext);
+        outputCode = generateSemanticColors(palettes, themeContext, currentMode);
       } else if (outputFormat === 'tokens') {
-        outputCode = generateDesignTokens(palettes, themeContext);
+        outputCode = generateDesignTokens(palettes, themeContext, currentMode);
       } else {
         const shapedWithTheme = output(palettes, currentMode, paletteDetail, themeContext);
         outputCode = currentVersion === "3"
