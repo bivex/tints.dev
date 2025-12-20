@@ -8,6 +8,7 @@ export interface Block {
 }
 
 export interface BlockChild {
+  _type: string;
   text: string;
 }
 

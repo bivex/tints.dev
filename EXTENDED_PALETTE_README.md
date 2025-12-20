@@ -39,12 +39,12 @@
 
 ### 1. Через веб-интерфейс
 ```
-http://localhost:5173/extended-palette/pastel-analogous-2
+http://localhost/extended-palette/pastel-analogous-2
 ```
 
 ### 2. Через API
 ```bash
-curl "http://localhost:5173/api/extended-palette/pastel-analogous-2"
+curl "http://localhost/api/extended-palette/pastel-analogous-2"
 ```
 
 ### 3. Через CLI (после сборки)

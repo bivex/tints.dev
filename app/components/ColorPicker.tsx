@@ -83,14 +83,16 @@ export default function ColorPicker({
   buttonContent,
   panelClassName = "absolute right-0 z-50 bg-white shadow-lg rounded-lg p-1 pb-2 translate-y-1",
   children,
+  lightnessId,
 }: {
   color: string;
   onChange: (_value: string) => void;
-  ringStyle: React.CSSProperties;
+  ringStyle?: React.CSSProperties;
   buttonContent?: React.ReactNode;
   buttonClassName?: string;
   panelClassName?: string;
   children?: React.ReactNode;
+  lightnessId?: string;
 }) {
   const defaultButtonContent = (
     <>
@@ -112,6 +114,7 @@ export default function ColorPicker({
               color={color}
               onChange={onChange}
               onClose={() => close()}
+              lightnessId={lightnessId}
             />
             {children}
           </>

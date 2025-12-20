@@ -13,6 +13,19 @@
 - Write the current state of the entire palette to a hashed URL
 - Click between swatches to add a new stop in between
 
+- **Div Templates Feature** ✨
+  - [x] Create DivTemplates component with categorized templates
+  - [x] Implement template generators for popular patterns (flexbox, spacing, cards, status, skeleton, gradients)
+  - [x] Add copy-to-clipboard functionality for templates
+  - [x] Integrate templates with generated palette colors
+  - [x] Add dark mode support for templates
+  - [x] Include Gentle Aura color integration
+  - [x] Add templates to Demo component
+  - [x] Create documentation (DIV_TEMPLATES_README.md)
+  - [x] Fix preview rendering - convert HTML strings to React components
+  - [x] Add proper visual styling for all template previews
+  - [x] Test integration and functionality
+
 - **Automatic Stop Selection**
 
   - [x] Remove manual stop selection UI and functionality

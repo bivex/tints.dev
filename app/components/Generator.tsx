@@ -75,6 +75,7 @@ import {
 
 import Header from "~/components/Header";
 import { createDisplayColor } from "~/lib/createDisplayColor";
+import DivTemplates from "~/components/DivTemplates";
 
 // Функция для рандомизации Adobe настроек
 const randomizeAdobeSettings = (): PremiumOptionsType => {
@@ -689,6 +690,11 @@ export default function Generator({ palettes, about, stars }: GeneratorProps) {
               </div>
             </div>
           </section>
+        )}
+
+        {/* Div Templates - Always visible in main interface */}
+        {palettesState.length > 0 && (
+          <DivTemplates palette={palettesState[0]} isDarkMode={false} />
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
