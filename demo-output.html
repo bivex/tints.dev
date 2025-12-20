@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tints.dev Output Demo</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        .output { background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #dee2e6; }
+        .copy-btn { float: right; padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .copy-btn:hover { background: #0056b3; }
+        .copied { background: #28a745 !important; }
+    </style>
+</head>
+<body>
+    <h1>Улучшенный вывод цветов для Tailwind CSS</h1>
+
+    <h2>Версия 3 (tailwind.config.js)</h2>
+    <div class="output">
+        <button class="copy-btn" onclick="copyToClipboard('v3-output')">Копировать</button>
+        <pre id="v3-output">// Copy and paste this into your tailwind.config.js
+module.exports = {
+  theme: {
+    extend: {
+      colors: {
+        "brand": {
+          50: "rgb(247, 254, 231)",
+          100: "rgb(236, 252, 203)",
+          200: "rgb(217, 249, 157)",
+          300: "rgb(190, 242, 100)",
+          400: "rgb(163, 230, 53)",
+          500: "rgb(132, 204, 22)",
+          600: "rgb(101, 163, 13)",
+          700: "rgb(77, 124, 15)",
+          800: "rgb(63, 98, 18)",
+          900: "rgb(54, 83, 20)"
+        },
+        "neutral": {
+          0: "rgb(255, 255, 255)",
+          50: "rgb(250, 250, 250)",
+          100: "rgb(245, 245, 245)",
+          200: "rgb(229, 229, 229)",
+          300: "rgb(212, 212, 212)",
+          400: "rgb(163, 163, 163)",
+          500: "rgb(115, 115, 115)",
+          600: "rgb(82, 82, 82)",
+          700: "rgb(64, 64, 64)",
+          800: "rgb(38, 38, 38)",
+          900: "rgb(23, 23, 23)",
+          950: "rgb(10, 10, 10)"
+        }
+      }
+    }
+  }
+};</pre>
+    </div>
+
+    <h2>Версия 4 (@theme в CSS)</h2>
+    <div class="output">
+        <button class="copy-btn" onclick="copyToClipboard('v4-output')">Копировать</button>
+        <pre id="v4-output">/* Copy and paste this into your CSS file with Tailwind CSS v4 */
+@theme {
+  /* Brand colors */
+  --color-brand-50: rgb(247, 254, 231);
+  --color-brand-100: rgb(236, 252, 203);
+  --color-brand-200: rgb(217, 249, 157);
+  --color-brand-300: rgb(190, 242, 100);
+  --color-brand-400: rgb(163, 230, 53);
+  --color-brand-500: rgb(132, 204, 22);
+  --color-brand-600: rgb(101, 163, 13);
+  --color-brand-700: rgb(77, 124, 15);
+  --color-brand-800: rgb(63, 98, 18);
+  --color-brand-900: rgb(54, 83, 20);
+
+  /* Neutral colors */
+  --color-neutral-0: rgb(255, 255, 255);
+  --color-neutral-50: rgb(250, 250, 250);
+  --color-neutral-100: rgb(245, 245, 245);
+  --color-neutral-200: rgb(229, 229, 229);
+  --color-neutral-300: rgb(212, 212, 212);
+  --color-neutral-400: rgb(163, 163, 163);
+  --color-neutral-500: rgb(115, 115, 115);
+  --color-neutral-600: rgb(82, 82, 82);
+  --color-neutral-700: rgb(64, 64, 64);
+  --color-neutral-800: rgb(38, 38, 38);
+  --color-neutral-900: rgb(23, 23, 23);
+  --color-neutral-950: rgb(10, 10, 10);
+}</pre>
+    </div>
+
+    <script>
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = element.previousElementSibling;
+                btn.textContent = 'Скопировано!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'Копировать';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -321,6 +321,7 @@ export default function Generator({ palettes, about, stars }: GeneratorProps) {
           key={currentPalette.id}
           close={handleDemo}
           palette={currentPalette}
+          palettes={palettesState}
           title={currentPalette.name || "The tastiest demos"}
           description={currentPalette.description || "This feature could do with some work. It's currently a placeholder."}
           imageUrl={`//picsum.photos/seed/${currentPalette.value}/400/800/`}

@@ -1,4 +1,19 @@
-import { ClipboardDocumentIcon, CheckIcon } from "@heroicons/react/24/solid";
+/**
+ * Copyright (c) 2025 Bivex
+ *
+ * Author: Bivex
+ * Available for contact via email: support@b-b.top
+ * For up-to-date contact information:
+ * https://github.com/bivex
+ *
+ * Created: 2025-12-20T16:13:25
+ * Last Updated: 2025-12-20T16:14:31
+ *
+ * Licensed under the MIT License.
+ * Commercial licensing available upon request.
+ */
+
+import { ClipboardDocumentIcon, CheckIcon, EyeIcon, CodeBracketIcon } from "@heroicons/react/24/solid";
 import * as Headless from "@headlessui/react";
 import { useCopyToClipboard } from "usehooks-ts";
 
@@ -8,6 +23,7 @@ import { output } from "~/lib/responses";
 import type { Mode, PaletteConfig, Version } from "~/types";
 import { Radio } from "~/components/catalyst/radio";
 import { useState } from "react";
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from "~/components/catalyst/dropdown";
 
 type OutputProps = {
   palettes: PaletteConfig[];
@@ -26,6 +42,7 @@ export default function Output({
 }: OutputProps) {
   const [, copy] = useCopyToClipboard();
   const [copied, setCopied] = useState(false);
+  const [viewMode, setViewMode] = useState<'code' | 'visual'>('code');
   const shaped = output(palettes, currentMode);
 
   const displayed: string =
@@ -35,6 +52,12 @@ export default function Output({
 
   const handleCopy = async () => {
     await copy(displayed);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCopyColor = async (color: string) => {
+    await copy(color);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -91,6 +114,20 @@ export default function Output({
         className="relative w-full p-4 mx-auto bg-gray-50 text-gray-800 text-sm border border-gray-200 rounded-lg overflow-scroll"
       >
         <div className="absolute right-4 top-4 flex gap-2">
+          <Button
+            outline
+            onClick={() => setViewMode(viewMode === 'code' ? 'visual' : 'code')}
+            className="flex items-center gap-2"
+          >
+            {viewMode === 'code' ? (
+              <EyeIcon className="size-4" />
+            ) : (
+              <CodeBracketIcon className="size-4" />
+            )}
+            <span className="sr-only">
+              {viewMode === 'code' ? 'Show Visual' : 'Show Code'}
+            </span>
+          </Button>
           <Button outline onClick={handleCopy}>
             {copied ? (
               <CheckIcon className="size-4 text-green-600" />
@@ -100,46 +137,144 @@ export default function Output({
             <span className="sr-only">Copy to Clipboard</span>
           </Button>
         </div>
+
         <div className="pr-20">
-          {currentVersion === "3" ? (
-            <pre className="whitespace-pre-wrap break-all">{formatVersion3Output(shaped)}</pre>
+          {viewMode === 'visual' ? (
+            <VisualPalettePreview
+              palettes={shaped}
+              currentMode={currentMode}
+              onCopyColor={handleCopyColor}
+              copied={copied}
+            />
           ) : (
-            <pre className="whitespace-pre-wrap break-all">{displayed}</pre>
+            <>
+              {currentVersion === "3" ? (
+                <pre className="whitespace-pre-wrap break-all">{formatVersion3Output(shaped)}</pre>
+              ) : (
+                <pre className="whitespace-pre-wrap break-all">{displayed}</pre>
+              )}
+            </>
           )}
         </div>
       </section>
       <div className="prose">
-        {currentVersion === "3" ? (
-          <p>
-            Paste this into your <code>tailwind.config.js</code> file
-          </p>
-        ) : (
-          <p>
-            Paste this into the <code>css</code> file with your Tailwind config
-          </p>
-        )}
+        <div className="flex items-center justify-between">
+          <div>
+            {currentVersion === "3" ? (
+              <p>
+                Paste this into your <code>tailwind.config.js</code> file
+              </p>
+            ) : (
+              <p>
+                Paste this into the <code>css</code> file with your Tailwind config
+              </p>
+            )}
+          </div>
+          <div className="text-sm text-gray-600">
+            {viewMode === 'visual' ? (
+              <span>Visual preview • Click colors to copy values</span>
+            ) : (
+              <span>Code view • Use eye icon for visual preview</span>
+            )}
+          </div>
+        </div>
       </div>
     </>
   );
 }
 
+function VisualPalettePreview({
+  palettes,
+  currentMode,
+  onCopyColor,
+  copied
+}: {
+  palettes: Record<string, any>;
+  currentMode: Mode;
+  onCopyColor: (color: string) => void;
+  copied: boolean;
+}) {
+  return (
+    <div className="space-y-8">
+      {Object.entries(palettes).map(([paletteName, shades]) => (
+        <div key={paletteName} className="space-y-3">
+          <h3 className="text-lg font-semibold text-gray-900 capitalize">
+            {paletteName.replace(/-/g, ' ')}
+          </h3>
+          <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-11 gap-2">
+            {Object.entries(shades as Record<string, string>).map(([shade, colorValue]) => (
+              <div
+                key={shade}
+                className="flex flex-col items-center space-y-2 p-2 rounded-lg bg-white border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => onCopyColor(colorValue)}
+              >
+                <div
+                  className="w-12 h-12 rounded-md border-2 border-gray-300 shadow-sm"
+                  style={{ backgroundColor: colorValue.replace(' / <alpha-value>', '') }}
+                  title={`${paletteName}-${shade}: ${colorValue}`}
+                />
+                <div className="text-center">
+                  <div className="text-xs font-medium text-gray-700">{shade}</div>
+                  <div className="text-xs text-gray-500 font-mono truncate max-w-16">
+                    {colorValue.length > 12 ? `${colorValue.substring(0, 12)}...` : colorValue}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {Object.keys(palettes).length === 0 && (
+        <div className="text-center py-12 text-gray-500">
+          <EyeIcon className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900">No palettes to preview</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            Generate some color palettes to see the visual preview here.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function formatVersion3Output(colors: Record<string, any>) {
-  const output = [`// Copy and paste this into your tailwind.config.js`, `module.exports = {`, `  theme: {`, `    extend: {`, `      colors: {`];
+  const output = [
+    `// ==========================================================================`,
+    `// ${Object.keys(colors).length} Custom Color Palette${Object.keys(colors).length > 1 ? 's' : ''}`,
+    `// Generated by tints.dev`,
+    `// Copy and paste this into your tailwind.config.js`,
+    `// ==========================================================================`,
+    ``,
+    `module.exports = {`,
+    `  theme: {`,
+    `    extend: {`,
+    `      colors: {`
+  ];
 
   Object.entries(colors).forEach(([paletteName, shades], index) => {
+    const paletteTitle = paletteName.charAt(0).toUpperCase() + paletteName.slice(1).replace(/-/g, ' ');
+    output.push(`        // ${paletteTitle} Colors`);
     output.push(`        "${paletteName}": {`);
-    Object.entries(shades as Record<string, string>).forEach(([shade, value]) => {
-      const isLast = index === Object.keys(colors).length - 1 &&
-                    shade === Object.keys(shades).pop();
-      const comma = isLast ? '' : ',';
+
+    const shadeEntries = Object.entries(shades as Record<string, string>);
+    shadeEntries.forEach(([shade, value], shadeIndex) => {
+      const isLastShade = shadeIndex === shadeEntries.length - 1;
+      const comma = isLastShade ? '' : ',';
       output.push(`          ${shade}: "${value}"${comma}`);
     });
+
     const isLastPalette = index === Object.keys(colors).length - 1;
     const comma = isLastPalette ? '' : ',';
     output.push(`        }${comma}`);
+
+    // Add empty line between palettes, but not after the last one
+    if (!isLastPalette) {
+      output.push(``);
+    }
   });
 
-  output.push(`      },`, `    },`, `  },`, `};`);
+  output.push(`      },`, `    },`, `  },`, `};`, ``);
 
   return output.join('\n');
 }
@@ -154,18 +289,32 @@ function createVersion3Config(colors: Record<string, string>) {
 }
 
 function createVersion4Config(colors: Record<string, any>) {
-  const output = [`/* Copy and paste this into your CSS file with Tailwind CSS v4 */`, `@theme {`];
+  const output = [
+    `/* ==========================================================================`,
+    ` * ${Object.keys(colors).length} Custom Color Palette${Object.keys(colors).length > 1 ? 's' : ''}`,
+    ` * Generated by tints.dev`,
+    ` * Copy and paste this into your CSS file with Tailwind CSS v4`,
+    ` * ========================================================================== */`,
+    ``,
+    `@theme {`
+  ];
 
-  Object.entries(colors).forEach(([colorName, shades]) => {
-    output.push(`  /* ${colorName.charAt(0).toUpperCase() + colorName.slice(1)} colors */`);
+  Object.entries(colors).forEach(([colorName, shades], paletteIndex) => {
+    const paletteTitle = colorName.charAt(0).toUpperCase() + colorName.slice(1).replace(/-/g, ' ');
+    output.push(`  /* ${paletteTitle} Colors */`);
+
     Object.entries(shades as Record<string, string>).forEach(([shade, value]) => {
       const cleanValue = value.toLocaleLowerCase().replace(" / <alpha-value>", "");
       output.push(`  --color-${colorName}-${shade}: ${cleanValue};`);
     });
-    output.push(""); // Empty line between palettes
+
+    // Add empty line between palettes, but not after the last one
+    if (paletteIndex < Object.keys(colors).length - 1) {
+      output.push("");
+    }
   });
 
-  output.push(`}`);
+  output.push(`}`, ``);
 
   return output.join('\n');
 }
