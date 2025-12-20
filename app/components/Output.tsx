@@ -7,13 +7,13 @@
  * https://github.com/bivex
  *
  * Created: 2025-12-20T16:13:25
- * Last Updated: 2025-12-20T16:31:19
+ * Last Updated: 2025-12-20T16:34:52
  *
  * Licensed under the MIT License.
  * Commercial licensing available upon request.
  */
 
-import { ClipboardDocumentIcon, CheckIcon, EyeIcon, CodeBracketIcon, PaintBrushIcon, CubeIcon, SparklesIcon } from "@heroicons/react/24/solid";
+import { ClipboardDocumentIcon, CheckIcon, EyeIcon, CodeBracketIcon, PaintBrushIcon, CubeIcon, SparklesIcon, SunIcon, MoonIcon, SwatchIcon } from "@heroicons/react/24/solid";
 import * as Headless from "@headlessui/react";
 import { useCopyToClipboard } from "usehooks-ts";
 
@@ -45,7 +45,8 @@ export default function Output({
   const [viewMode, setViewMode] = useState<'code' | 'visual'>('code');
   const [buttonStyleBatch, setButtonStyleBatch] = useState<'primary' | 'secondary' | 'accent'>('primary');
   const [paletteDetail, setPaletteDetail] = useState<'standard' | 'extended'>('standard');
-  const shaped = output(palettes, currentMode, paletteDetail);
+  const [themeContext, setThemeContext] = useState<'light' | 'dark' | 'auto'>('auto');
+  const shaped = output(palettes, currentMode, paletteDetail, themeContext);
 
   const displayed: string =
     currentVersion === "3"
@@ -183,7 +184,41 @@ export default function Output({
             <Headless.Field className="flex items-center gap-2">
               <Radio value="extended" />
               <Headless.Label className="text-base/6 select-none sm:text-sm/6 whitespace-nowrap">
-                Extended (21 stops)
+                Extended (23 stops)
+              </Headless.Label>
+            </Headless.Field>
+          </Headless.RadioGroup>
+        </Headless.Fieldset>
+
+        <Headless.Fieldset className="flex gap-3">
+          <Headless.Legend className="text-base/6 font-medium sm:text-sm/6">
+            Theme context:
+          </Headless.Legend>
+          <Headless.RadioGroup
+            onChange={(v) => setThemeContext(v as 'light' | 'dark' | 'auto')}
+            name="theme"
+            value={themeContext}
+            className="flex gap-3"
+          >
+            <Headless.Field className="flex items-center gap-2">
+              <Radio value="auto" />
+              <SwatchIcon className="size-4" />
+              <Headless.Label className="text-base/6 select-none sm:text-sm/6 whitespace-nowrap">
+                Auto (Universal)
+              </Headless.Label>
+            </Headless.Field>
+            <Headless.Field className="flex items-center gap-2">
+              <Radio value="light" />
+              <SunIcon className="size-4" />
+              <Headless.Label className="text-base/6 select-none sm:text-sm/6 whitespace-nowrap">
+                Light Theme
+              </Headless.Label>
+            </Headless.Field>
+            <Headless.Field className="flex items-center gap-2">
+              <Radio value="dark" />
+              <MoonIcon className="size-4" />
+              <Headless.Label className="text-base/6 select-none sm:text-sm/6 whitespace-nowrap">
+                Dark Theme
               </Headless.Label>
             </Headless.Field>
           </Headless.RadioGroup>

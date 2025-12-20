@@ -150,7 +150,7 @@ export function requestToPalettes(url: string) {
 }
 
 // Convert array of palette objects used in GUI to array of colour swatches for Tailwind Config
-export function output(palettes: PaletteConfig[], mode: Mode = DEFAULT_MODE, detail: 'standard' | 'extended' = 'standard') {
+export function output(palettes: PaletteConfig[], mode: Mode = DEFAULT_MODE, detail: 'standard' | 'extended' = 'standard', themeContext: 'light' | 'dark' | 'auto' = 'auto') {
   const shaped = {};
 
   palettes.forEach((palette) => {
@@ -168,6 +168,11 @@ export function output(palettes: PaletteConfig[], mode: Mode = DEFAULT_MODE, det
             [swatch.stop]: createDisplayColor(swatch.hex, mode, true),
           }),
         );
+    }
+
+    // Apply theme context adjustments if needed
+    if (themeContext !== 'auto') {
+      swatches = adjustColorsForTheme(swatches, themeContext);
     }
 
     Object.assign(shaped, { [palette.name]: swatches });
@@ -221,6 +226,50 @@ function generateExtendedPalette(baseSwatches: any[], mode: Mode) {
   });
 
   return extendedSwatches;
+}
+
+// Adjust colors for specific theme context
+function adjustColorsForTheme(swatches: Record<number, string>, theme: 'light' | 'dark'): Record<number, string> {
+  const adjustedSwatches: Record<number, string> = {};
+
+  Object.entries(swatches).forEach(([stop, colorValue]) => {
+    const stopNum = parseInt(stop);
+    let adjustedColor = colorValue;
+
+    // Extract the color part without alpha
+    const cleanColor = colorValue.replace(' / <alpha-value>', '');
+
+    try {
+      const color = chroma(cleanColor);
+
+      if (theme === 'light') {
+        // For light theme: ensure good contrast against light backgrounds
+        // Make darker colors slightly lighter for better readability
+        if (stopNum >= 600) {
+          const [l, c, h] = color.oklch();
+          // Slightly increase lightness for dark colors in light theme
+          const adjustedLightness = Math.min(0.9, l + 0.05);
+          adjustedColor = createDisplayColor(chroma.oklch(adjustedLightness, c, h).hex(), 'oklch', true);
+        }
+      } else if (theme === 'dark') {
+        // For dark theme: ensure good contrast against dark backgrounds
+        // Make lighter colors slightly darker for better readability
+        if (stopNum <= 400) {
+          const [l, c, h] = color.oklch();
+          // Slightly decrease lightness for light colors in dark theme
+          const adjustedLightness = Math.max(0.1, l - 0.05);
+          adjustedColor = createDisplayColor(chroma.oklch(adjustedLightness, c, h).hex(), 'oklch', true);
+        }
+      }
+    } catch (error) {
+      // If color parsing fails, keep original color
+      console.warn(`Could not adjust color for theme: ${cleanColor}`);
+    }
+
+    adjustedSwatches[stopNum] = adjustedColor;
+  });
+
+  return adjustedSwatches;
 }
 
 export function createRedirectResponse(
