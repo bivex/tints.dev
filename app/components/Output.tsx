@@ -7,7 +7,7 @@
  * https://github.com/bivex
  *
  * Created: 2025-12-20T16:13:25
- * Last Updated: 2025-12-20T16:39:18
+ * Last Updated: 2025-12-20T16:41:14
  *
  * Licensed under the MIT License.
  * Commercial licensing available upon request.
@@ -47,45 +47,8 @@ export default function Output({
   const [paletteDetail, setPaletteDetail] = useState<'standard' | 'extended'>('standard');
   const [themeContext, setThemeContext] = useState<'light' | 'dark' | 'auto'>('auto');
   const [outputFormat, setOutputFormat] = useState<'palette' | 'semantic' | 'tokens'>('palette');
-  const shaped = output(palettes, currentMode, paletteDetail, themeContext);
 
-  const displayed: string = (() => {
-    if (outputFormat === 'semantic') {
-      return generateSemanticColors(palettes, themeContext);
-    } else if (outputFormat === 'tokens') {
-      return generateDesignTokens(palettes, themeContext);
-    } else {
-      return currentVersion === "3"
-        ? createVersion3Config(shaped, themeContext)
-        : createVersion4Config(shaped, themeContext);
-    }
-  })();
-
-  const handleCopy = async () => {
-    await copy(displayed);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleCopyWithTheme = async () => {
-    let outputCode = '';
-
-    if (outputFormat === 'semantic') {
-      outputCode = generateSemanticColors(palettes, themeContext);
-    } else if (outputFormat === 'tokens') {
-      outputCode = generateDesignTokens(palettes, themeContext);
-    } else {
-      const shapedWithTheme = output(palettes, currentMode, paletteDetail, themeContext);
-      outputCode = currentVersion === "3"
-        ? createVersion3Config(shapedWithTheme, themeContext)
-        : createVersion4Config(shapedWithTheme, themeContext);
-    }
-
-    await copy(outputCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
+  // Helper functions need to be defined before usage
   const generateSemanticColors = (palettes: PaletteConfig[], theme: 'light' | 'dark' | 'auto') => {
     const palette = palettes[0]; // Используем первую палитру как основу
     if (!palette) return '';
@@ -234,10 +197,119 @@ export default function Output({
     }, null, 2);
   };
 
-  const handleCopyColor = async (color: string) => {
-    await copy(color);
+  const shaped = output(palettes, currentMode, paletteDetail, themeContext);
+
+  const displayed: string = (() => {
+    if (outputFormat === 'semantic') {
+      return generateSemanticColors(palettes, themeContext);
+    } else if (outputFormat === 'tokens') {
+      return generateDesignTokens(palettes, themeContext);
+    } else {
+      return currentVersion === "3"
+        ? createVersion3Config(shaped, themeContext)
+        : createVersion4Config(shaped, themeContext);
+    }
+  })();
+
+  const handleCopy = async () => {
+    await copy(displayed);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCopyWithTheme = async () => {
+    let outputCode = '';
+
+    if (outputFormat === 'semantic') {
+      outputCode = generateSemanticColors(palettes, themeContext);
+    } else if (outputFormat === 'tokens') {
+      outputCode = generateDesignTokens(palettes, themeContext);
+    } else {
+      const shapedWithTheme = output(palettes, currentMode, paletteDetail, themeContext);
+      outputCode = currentVersion === "3"
+        ? createVersion3Config(shapedWithTheme, themeContext)
+        : createVersion4Config(shapedWithTheme, themeContext);
+    }
+
+    await copy(outputCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCopyColor = async (color: string) => {
+    const palette = palettes[0]; // Используем первую палитру как основу
+    if (!palette) return '';
+
+    const shades = palette.swatches.reduce((acc, swatch) => {
+      if (![0, 1000].includes(swatch.stop)) {
+        acc[swatch.stop] = createDisplayColor(swatch.hex, currentMode, true);
+      }
+      return acc;
+    }, {} as Record<number, string>);
+
+    // Определяем цвета в зависимости от темы
+    const isDark = theme === 'dark';
+    const primaryBase = shades[500] || shades[600];
+    const primaryHover = shades[600] || shades[700];
+    const primaryActive = shades[700] || shades[800];
+
+    const semanticColors = {
+      // Базовые цвета
+      background: isDark ? '#0f172a' : '#ffffff',
+      surface: isDark ? '#1e293b' : '#f8fafc',
+      'surface-hover': isDark ? '#334155' : '#f1f5f9',
+      border: isDark ? '#334155' : '#e2e8f0',
+      'border-hover': isDark ? '#475569' : '#cbd5e1',
+
+      // Текст
+      'text-primary': isDark ? '#f8fafc' : '#0f172a',
+      'text-secondary': isDark ? '#94a3b8' : '#475569',
+      'text-tertiary': isDark ? '#64748b' : '#64748b',
+      'text-disabled': isDark ? '#475569' : '#94a3b8',
+
+      // Primary система
+      primary: primaryBase,
+      'primary-hover': primaryHover,
+      'primary-active': primaryActive,
+      'primary-contrast': isDark ? '#ffffff' : '#ffffff',
+
+      // Системные цвета
+      success: isDark ? '#10b981' : '#059669',
+      'success-hover': isDark ? '#059669' : '#047857',
+      warning: '#f59e0b',
+      'warning-hover': '#d97706',
+      error: '#ef4444',
+      'error-hover': '#dc2626',
+      info: primaryBase,
+      'info-hover': primaryHover,
+
+      // Акцент (вторичный)
+      accent: shades[400] || shades[300],
+      'accent-hover': shades[500] || shades[400],
+
+      // Disabled состояния
+      disabled: isDark ? '#334155' : '#e2e8f0',
+      'disabled-text': isDark ? '#64748b' : '#94a3b8',
+    };
+
+    const themeName = theme === 'auto' ? 'universal' : theme;
+    const output = [
+      `/* ==========================================================================`,
+      ` * Semantic Color System (${themeName} theme)`,
+      ` * Generated by tints.dev`,
+      ` * Design-system ready color roles`,
+      ` * ========================================================================== */`,
+      ``,
+      `:root {`
+    ];
+
+    Object.entries(semanticColors).forEach(([role, color]) => {
+      output.push(`  --color-${role}: ${color};`);
+    });
+
+    output.push(`}`, ``);
+
+    return output.join('\n');
   };
 
   const generateButtonStyles = (batch: 'primary' | 'secondary' | 'accent') => {
