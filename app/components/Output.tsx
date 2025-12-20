@@ -7,7 +7,7 @@
  * https://github.com/bivex
  *
  * Created: 2025-12-20T16:13:25
- * Last Updated: 2025-12-20T16:45:03
+ * Last Updated: 2025-12-20T16:48:46
  *
  * Licensed under the MIT License.
  * Commercial licensing available upon request.
@@ -40,6 +40,15 @@ export default function Output({
   currentVersion,
   setCurrentVersion,
 }: OutputProps) {
+  // Early return if no palettes
+  if (!palettes || palettes.length === 0) {
+    return (
+      <div className="w-full p-4 mx-auto bg-gray-50 text-gray-800 text-sm border border-gray-200 rounded-lg">
+        <p className="text-gray-500">No palettes available to display.</p>
+      </div>
+    );
+  }
+
   const [, copy] = useCopyToClipboard();
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<'code' | 'visual'>('code');
@@ -50,6 +59,8 @@ export default function Output({
 
   // Helper functions need to be defined before usage
   const generateSemanticColors = (palettes: PaletteConfig[], theme: 'light' | 'dark' | 'auto') => {
+    if (!palettes || palettes.length === 0) return '';
+
     const palette = palettes[0]; // Используем первую палитру как основу
     if (!palette) return '';
 
@@ -126,6 +137,8 @@ export default function Output({
   };
 
   const generateDesignTokens = (palettes: PaletteConfig[], theme: 'light' | 'dark' | 'auto') => {
+    if (!palettes || palettes.length === 0) return '';
+
     const palette = palettes[0];
     if (!palette) return '';
 
