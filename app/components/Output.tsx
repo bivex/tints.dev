@@ -7,7 +7,7 @@
  * https://github.com/bivex
  *
  * Created: 2025-12-20T16:13:25
- * Last Updated: 2025-12-20T16:56:00
+ * Last Updated: 2025-12-20T17:03:26
  *
  * Licensed under the MIT License.
  * Commercial licensing available upon request.
@@ -40,7 +40,15 @@ export default function Output({
   currentVersion,
   setCurrentVersion,
 }: OutputProps) {
-  // Debug logging
+  const [, copy] = useCopyToClipboard();
+  const [copied, setCopied] = useState(false);
+  const [viewMode, setViewMode] = useState<'code' | 'visual'>('code');
+  const [buttonStyleBatch, setButtonStyleBatch] = useState<'primary' | 'secondary' | 'accent'>('primary');
+  const [paletteDetail, setPaletteDetail] = useState<'standard' | 'extended'>('standard');
+  const [themeContext, setThemeContext] = useState<'light' | 'dark' | 'auto'>('auto');
+  const [outputFormat, setOutputFormat] = useState<'palette' | 'semantic' | 'tokens'>('palette');
+
+  // Debug logging - move after state initialization
   if (process.env.NODE_ENV === 'development') {
     console.log('🔧 Output component render:', {
       palettesCount: palettes?.length || 0,
@@ -62,26 +70,15 @@ export default function Output({
         <p className="text-gray-500">No palettes available to display.</p>
       </div>
     );
-  }
-
-  const [, copy] = useCopyToClipboard();
-  const [copied, setCopied] = useState(false);
-  const [viewMode, setViewMode] = useState<'code' | 'visual'>('code');
-  const [buttonStyleBatch, setButtonStyleBatch] = useState<'primary' | 'secondary' | 'accent'>('primary');
-  const [paletteDetail, setPaletteDetail] = useState<'standard' | 'extended'>('standard');
-  const [themeContext, setThemeContext] = useState<'light' | 'dark' | 'auto'>('auto');
-  const [outputFormat, setOutputFormat] = useState<'palette' | 'semantic' | 'tokens'>('palette');
-
-  // Debug logging - move after state initialization
-  if (process.env.NODE_ENV === 'development') {
-    console.log('🔧 Output component render:', {
-      palettesCount: palettes?.length || 0,
-      currentMode,
-      currentVersion,
-      outputFormat,
-      themeContext,
-      paletteDetail
-    });
+  }  if (!palettes || palettes.length === 0) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('⚠️ No palettes available, showing empty state');
+    }
+    return (
+      <div className="w-full p-4 mx-auto bg-gray-50 text-gray-800 text-sm border border-gray-200 rounded-lg">
+        <p className="text-gray-500">No palettes available to display.</p>
+      </div>
+    );
   }
 
   // Helper functions need to be defined before usage
