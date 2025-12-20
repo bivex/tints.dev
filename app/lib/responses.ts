@@ -1,4 +1,5 @@
 import { nanoid } from "nanoid";
+import chroma from "chroma-js";
 
 import {
   DEFAULT_MODE,
@@ -149,23 +150,77 @@ export function requestToPalettes(url: string) {
 }
 
 // Convert array of palette objects used in GUI to array of colour swatches for Tailwind Config
-export function output(palettes: PaletteConfig[], mode: Mode = DEFAULT_MODE) {
+export function output(palettes: PaletteConfig[], mode: Mode = DEFAULT_MODE, detail: 'standard' | 'extended' = 'standard') {
   const shaped = {};
 
   palettes.forEach((palette) => {
-    const swatches = {};
-    palette.swatches
-      .filter((swatch) => ![0, 1000].includes(swatch.stop))
-      .forEach((swatch) =>
-        Object.assign(swatches, {
-          [swatch.stop]: createDisplayColor(swatch.hex, mode, true),
-        }),
-      );
+    let swatches = {};
+
+    if (detail === 'extended') {
+      // For extended mode, interpolate additional stops between existing ones
+      swatches = generateExtendedPalette(palette.swatches, mode);
+    } else {
+      // Standard mode: use existing swatches
+      palette.swatches
+        .filter((swatch) => ![0, 1000].includes(swatch.stop))
+        .forEach((swatch) =>
+          Object.assign(swatches, {
+            [swatch.stop]: createDisplayColor(swatch.hex, mode, true),
+          }),
+        );
+    }
 
     Object.assign(shaped, { [palette.name]: swatches });
   });
 
   return shaped;
+}
+
+// Generate extended palette with interpolated intermediate stops
+function generateExtendedPalette(baseSwatches: any[], mode: Mode) {
+  const extendedSwatches: Record<number, string> = {};
+
+  // First, add all base swatches (excluding 0 and 1000)
+  baseSwatches
+    .filter((swatch) => ![0, 1000].includes(swatch.stop))
+    .forEach((swatch) => {
+      extendedSwatches[swatch.stop] = createDisplayColor(swatch.hex, mode, true);
+    });
+
+  // Define intermediate stops to generate
+  const intermediateStops = [
+    { from: 50, to: 100, stops: [75] },
+    { from: 100, to: 200, stops: [125, 150] },
+    { from: 200, to: 300, stops: [250] },
+    { from: 300, to: 400, stops: [350] },
+    { from: 400, to: 500, stops: [450] },
+    { from: 500, to: 600, stops: [550] },
+    { from: 600, to: 700, stops: [650] },
+    { from: 700, to: 800, stops: [750] },
+    { from: 800, to: 900, stops: [850] },
+    { from: 900, to: 950, stops: [925] },
+    { from: 50, to: 950, stops: [25] }, // Very light shade
+  ];
+
+  // Generate intermediate colors using chroma interpolation
+  intermediateStops.forEach(({ from, to, stops }) => {
+    const fromSwatch = baseSwatches.find(s => s.stop === from);
+    const toSwatch = baseSwatches.find(s => s.stop === to);
+
+    if (fromSwatch && toSwatch) {
+      const fromColor = chroma(fromSwatch.hex);
+      const toColor = chroma(toSwatch.hex);
+      const range = to - from;
+
+      stops.forEach(stop => {
+        const ratio = (stop - from) / range;
+        const interpolatedColor = chroma.mix(fromColor, toColor, ratio, 'lch');
+        extendedSwatches[stop] = createDisplayColor(interpolatedColor.hex(), mode, true);
+      });
+    }
+  });
+
+  return extendedSwatches;
 }
 
 export function createRedirectResponse(

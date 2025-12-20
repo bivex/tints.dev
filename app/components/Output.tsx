@@ -7,7 +7,7 @@
  * https://github.com/bivex
  *
  * Created: 2025-12-20T16:13:25
- * Last Updated: 2025-12-20T16:25:41
+ * Last Updated: 2025-12-20T16:31:19
  *
  * Licensed under the MIT License.
  * Commercial licensing available upon request.
@@ -44,7 +44,8 @@ export default function Output({
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<'code' | 'visual'>('code');
   const [buttonStyleBatch, setButtonStyleBatch] = useState<'primary' | 'secondary' | 'accent'>('primary');
-  const shaped = output(palettes, currentMode);
+  const [paletteDetail, setPaletteDetail] = useState<'standard' | 'extended'>('standard');
+  const shaped = output(palettes, currentMode, paletteDetail);
 
   const displayed: string =
     currentVersion === "3"
@@ -162,6 +163,31 @@ export default function Output({
             ))}
           </Headless.RadioGroup>
         </Headless.Fieldset>
+
+        <Headless.Fieldset className="flex gap-3">
+          <Headless.Legend className="text-base/6 font-medium sm:text-sm/6">
+            Palette detail:
+          </Headless.Legend>
+          <Headless.RadioGroup
+            onChange={(v) => setPaletteDetail(v as 'standard' | 'extended')}
+            name="detail"
+            value={paletteDetail}
+            className="flex gap-3"
+          >
+            <Headless.Field className="flex items-center gap-2">
+              <Radio value="standard" />
+              <Headless.Label className="text-base/6 select-none sm:text-sm/6 whitespace-nowrap">
+                Standard (11 stops)
+              </Headless.Label>
+            </Headless.Field>
+            <Headless.Field className="flex items-center gap-2">
+              <Radio value="extended" />
+              <Headless.Label className="text-base/6 select-none sm:text-sm/6 whitespace-nowrap">
+                Extended (21 stops)
+              </Headless.Label>
+            </Headless.Field>
+          </Headless.RadioGroup>
+        </Headless.Fieldset>
       </div>
 
       <section
@@ -203,6 +229,7 @@ export default function Output({
               currentMode={currentMode}
               onCopyColor={handleCopyColor}
               copied={copied}
+              paletteDetail={paletteDetail}
             />
           ) : (
             <>
@@ -328,12 +355,14 @@ function VisualPalettePreview({
   palettes,
   currentMode,
   onCopyColor,
-  copied
+  copied,
+  paletteDetail
 }: {
   palettes: Record<string, any>;
   currentMode: Mode;
   onCopyColor: (color: string) => void;
   copied: boolean;
+  paletteDetail: 'standard' | 'extended';
 }) {
   return (
     <div className="space-y-8">
@@ -342,7 +371,10 @@ function VisualPalettePreview({
           <h3 className="text-lg font-semibold text-gray-900 capitalize">
             {paletteName.replace(/-/g, ' ')}
           </h3>
-          <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-11 gap-2">
+          <div className={`grid gap-2 ${paletteDetail === 'extended'
+            ? 'grid-cols-5 sm:grid-cols-7 md:grid-cols-9 lg:grid-cols-11 xl:grid-cols-13'
+            : 'grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-11'
+          }`}>
             {Object.entries(shades as Record<string, string>).map(([shade, colorValue]) => (
               <div
                 key={shade}
