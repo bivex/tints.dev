@@ -7,7 +7,7 @@
  * https://github.com/bivex
  *
  * Created: 2025-12-20T16:13:25
- * Last Updated: 2025-12-20T17:08:09
+ * Last Updated: 2025-12-20T17:17:06
  *
  * Licensed under the MIT License.
  * Commercial licensing available upon request.
@@ -20,6 +20,7 @@ import { useCopyToClipboard } from "usehooks-ts";
 import { Button } from "~/components/catalyst/button";
 import { MODES, VERSIONS } from "~/lib/constants";
 import { output } from "~/lib/responses";
+import { generateSemanticColors, generateDesignTokens } from "~/lib/outputUtils";
 import type { Mode, PaletteConfig, Version } from "~/types";
 import { Radio } from "~/components/catalyst/radio";
 import { useState } from "react";
@@ -48,7 +49,19 @@ export default function Output({
   const [themeContext, setThemeContext] = useState<'light' | 'dark' | 'auto'>('auto');
   const [outputFormat, setOutputFormat] = useState<'palette' | 'semantic' | 'tokens'>('palette');
 
-  // Debug logging - move after state initialization
+  // Early return if no palettes
+  if (!palettes || palettes.length === 0) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('⚠️ No palettes available, showing empty state');
+    }
+    return (
+      <div className="w-full p-4 mx-auto bg-gray-50 text-gray-800 text-sm border border-gray-200 rounded-lg">
+        <p className="text-gray-500">No palettes available to display.</p>
+      </div>
+    );
+  }
+
+  // Debug logging - moved after state initialization and early return
   if (process.env.NODE_ENV === 'development') {
     console.log('🔧 Output component render:', {
       palettesCount: palettes?.length || 0,
@@ -60,207 +73,6 @@ export default function Output({
     });
   }
 
-  // Early return if no palettes
-  if (!palettes || palettes.length === 0) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('⚠️ No palettes available, showing empty state');
-    }
-    return (
-      <div className="w-full p-4 mx-auto bg-gray-50 text-gray-800 text-sm border border-gray-200 rounded-lg">
-        <p className="text-gray-500">No palettes available to display.</p>
-      </div>
-    );
-  }  if (!palettes || palettes.length === 0) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('⚠️ No palettes available, showing empty state');
-    }
-    return (
-      <div className="w-full p-4 mx-auto bg-gray-50 text-gray-800 text-sm border border-gray-200 rounded-lg">
-        <p className="text-gray-500">No palettes available to display.</p>
-      </div>
-    );
-  }
-
-  // Helper functions need to be defined before usage
-  const generateSemanticColors = (palettes: PaletteConfig[], theme: 'light' | 'dark' | 'auto', currentMode: Mode) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🎨 Generating semantic colors:', { palettesCount: palettes?.length, theme });
-    }
-
-    if (!palettes || palettes.length === 0) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('⚠️ No palettes for semantic colors');
-      }
-      return '';
-    }
-
-    const palette = palettes[0]; // Используем первую палитру как основу
-    if (!palette) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('⚠️ No palette found for semantic colors');
-      }
-      return '';
-    }
-
-    const shades = palette.swatches.reduce((acc, swatch) => {
-      if (![0, 1000].includes(swatch.stop)) {
-        acc[swatch.stop] = createDisplayColor(swatch.hex, currentMode, true);
-      }
-      return acc;
-    }, {} as Record<number, string>);
-
-    // Определяем цвета в зависимости от темы
-    const isDark = theme === 'dark';
-    const primaryBase = shades[500] || shades[600] || shades[700] || '#4f46e5';
-    const primaryHover = shades[600] || shades[700] || shades[800] || '#4338ca';
-    const primaryActive = shades[700] || shades[800] || shades[900] || '#3730a3';
-
-    const semanticColors = {
-      // Базовые цвета
-      background: isDark ? '#0f172a' : '#ffffff',
-      surface: isDark ? '#1e293b' : '#f8fafc',
-      'surface-hover': isDark ? '#334155' : '#f1f5f9',
-      border: isDark ? '#334155' : '#e2e8f0',
-      'border-hover': isDark ? '#475569' : '#cbd5e1',
-
-      // Текст
-      'text-primary': isDark ? '#f8fafc' : '#0f172a',
-      'text-secondary': isDark ? '#94a3b8' : '#475569',
-      'text-tertiary': isDark ? '#64748b' : '#64748b',
-      'text-disabled': isDark ? '#475569' : '#94a3b8',
-
-      // Primary система
-      primary: primaryBase,
-      'primary-hover': primaryHover,
-      'primary-active': primaryActive,
-      'primary-contrast': isDark ? '#ffffff' : '#ffffff',
-
-      // Системные цвета
-      success: isDark ? '#10b981' : '#059669',
-      'success-hover': isDark ? '#059669' : '#047857',
-      warning: '#f59e0b',
-      'warning-hover': '#d97706',
-      error: '#ef4444',
-      'error-hover': '#dc2626',
-      info: primaryBase,
-      'info-hover': primaryHover,
-
-      // Акцент (вторичный)
-      accent: shades[400] || shades[300] || shades[500] || '#8b5cf6',
-      'accent-hover': shades[500] || shades[400] || shades[600] || '#7c3aed',
-
-      // Disabled состояния
-      disabled: isDark ? '#334155' : '#e2e8f0',
-      'disabled-text': isDark ? '#64748b' : '#94a3b8',
-    };
-
-    const themeName = theme === 'auto' ? 'universal' : theme;
-    const output = [
-      `/* ==========================================================================`,
-      ` * Semantic Color System (${themeName} theme)`,
-      ` * Generated by tints.dev`,
-      ` * Design-system ready color roles`,
-      ` * ========================================================================== */`,
-      ``,
-      `:root {`
-    ];
-
-    Object.entries(semanticColors).forEach(([role, color]) => {
-      output.push(`  --color-${role}: ${color};`);
-    });
-
-    output.push(`}`, ``);
-
-    return output.join('\n');
-  };
-
-  const generateDesignTokens = (palettes: PaletteConfig[], theme: 'light' | 'dark' | 'auto', currentMode: Mode) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🎫 Generating design tokens:', { palettesCount: palettes?.length, theme });
-    }
-
-    if (!palettes || palettes.length === 0) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('⚠️ No palettes for design tokens');
-      }
-      return '';
-    }
-
-    const palette = palettes[0];
-    if (!palette) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('⚠️ No palette found for design tokens');
-      }
-      return '';
-    }
-
-    const shades = palette.swatches.reduce((acc, swatch) => {
-      if (![0, 1000].includes(swatch.stop)) {
-        acc[swatch.stop] = createDisplayColor(swatch.hex, currentMode, true);
-      }
-      return acc;
-    }, {} as Record<number, string>);
-
-    const isDark = theme === 'dark';
-    const themeName = theme === 'auto' ? 'universal' : theme;
-
-    const tokens = {
-      // Цветовая палитра
-      palette: shades,
-
-      // Семантические роли
-      semantic: {
-        background: isDark ? '#0f172a' : '#ffffff',
-        surface: isDark ? '#1e293b' : '#f8fafc',
-        'surface-hover': isDark ? '#334155' : '#f1f5f9',
-        border: isDark ? '#334155' : '#e2e8f0',
-        'border-hover': isDark ? '#475569' : '#cbd5e1',
-        'text-primary': isDark ? '#f8fafc' : '#0f172a',
-        'text-secondary': isDark ? '#94a3b8' : '#475569',
-        'text-tertiary': isDark ? '#64748b' : '#64748b',
-        primary: shades[500] || shades[600] || shades[700] || '#4f46e5',
-        'primary-hover': shades[600] || shades[700] || shades[800] || '#4338ca',
-        'primary-active': shades[700] || shades[800] || shades[900] || '#3730a3',
-        success: isDark ? '#10b981' : '#059669',
-        warning: '#f59e0b',
-        error: '#ef4444',
-        info: shades[500] || shades[600] || shades[700] || '#4f46e5',
-      },
-
-      // Компонентные токены
-      components: {
-        button: {
-          primary: {
-            background: shades[500] || shades[600] || shades[700] || '#4f46e5',
-            hover: shades[600] || shades[700] || shades[800] || '#4338ca',
-            active: shades[700] || shades[800] || shades[900] || '#3730a3',
-            disabled: isDark ? '#334155' : '#e2e8f0',
-            text: '#ffffff',
-          },
-          secondary: {
-            background: isDark ? '#334155' : '#f8fafc',
-            hover: isDark ? '#475569' : '#f1f5f9',
-            active: isDark ? '#64748b' : '#e2e8f0',
-            border: isDark ? '#475569' : '#cbd5e1',
-            text: isDark ? '#f8fafc' : '#0f172a',
-          }
-        },
-        input: {
-          background: isDark ? '#1e293b' : '#ffffff',
-          border: isDark ? '#334155' : '#e2e8f0',
-          'border-focus': shades[500] || shades[600] || shades[700] || '#4f46e5',
-          placeholder: isDark ? '#64748b' : '#94a3b8',
-        }
-      }
-    };
-
-    return JSON.stringify({
-      name: `${palette.name} Design Tokens`,
-      theme: themeName,
-      version: '1.0.0',
-      tokens
-    }, null, 2);
-  };
 
   const shaped = output(palettes, currentMode, paletteDetail, themeContext);
 
