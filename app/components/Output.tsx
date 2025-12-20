@@ -7,7 +7,7 @@
  * https://github.com/bivex
  *
  * Created: 2025-12-20T16:13:25
- * Last Updated: 2025-12-20T16:14:31
+ * Last Updated: 2025-12-20T16:17:00
  *
  * Licensed under the MIT License.
  * Commercial licensing available upon request.
@@ -113,20 +113,23 @@ export default function Output({
         id="output"
         className="relative w-full p-4 mx-auto bg-gray-50 text-gray-800 text-sm border border-gray-200 rounded-lg overflow-scroll"
       >
-        <div className="absolute right-4 top-4 flex gap-2">
+        <div className="absolute right-4 top-4 flex gap-2 z-10">
           <Button
             outline
             onClick={() => setViewMode(viewMode === 'code' ? 'visual' : 'code')}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm bg-white hover:bg-blue-50 shadow-md border-gray-300 font-medium transition-colors"
           >
             {viewMode === 'code' ? (
-              <EyeIcon className="size-4" />
+              <>
+                <EyeIcon className="size-4" />
+                <span>Visual</span>
+              </>
             ) : (
-              <CodeBracketIcon className="size-4" />
+              <>
+                <CodeBracketIcon className="size-4" />
+                <span>Code</span>
+              </>
             )}
-            <span className="sr-only">
-              {viewMode === 'code' ? 'Show Visual' : 'Show Code'}
-            </span>
           </Button>
           <Button outline onClick={handleCopy}>
             {copied ? (
