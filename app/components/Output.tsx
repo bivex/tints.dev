@@ -7,7 +7,7 @@
  * https://github.com/bivex
  *
  * Created: 2025-12-20T16:13:25
- * Last Updated: 2025-12-20T16:55:12
+ * Last Updated: 2025-12-20T16:56:00
  *
  * Licensed under the MIT License.
  * Commercial licensing available upon request.
@@ -71,6 +71,18 @@ export default function Output({
   const [paletteDetail, setPaletteDetail] = useState<'standard' | 'extended'>('standard');
   const [themeContext, setThemeContext] = useState<'light' | 'dark' | 'auto'>('auto');
   const [outputFormat, setOutputFormat] = useState<'palette' | 'semantic' | 'tokens'>('palette');
+
+  // Debug logging - move after state initialization
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔧 Output component render:', {
+      palettesCount: palettes?.length || 0,
+      currentMode,
+      currentVersion,
+      outputFormat,
+      themeContext,
+      paletteDetail
+    });
+  }
 
   // Helper functions need to be defined before usage
   const generateSemanticColors = (palettes: PaletteConfig[], theme: 'light' | 'dark' | 'auto') => {
